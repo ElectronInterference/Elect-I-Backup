@@ -1,0 +1,122 @@
+/*
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+     */
+    @Override
+    public void init_loop() {
+    
+    }
+
+    /*
+     * Code to run ONCE when the driver hits PLAY
+     */
+    @Override
+    public void start() {
+        TaterTot=1;
+        
+        
+
+    }
+
+    /*
+     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
+     */
+    @Override
+    public void loop() {
+        if (TaterTot == 1){
+            unlatch();
+        }
+        else if (TaterTot==2){
+            KnockMineralOff();
+        }
+        else if (TaterTot==3){
+            PlaceTeamMarker();
+        }
+        else if (TaterTot==4){
+            Park();
+        }
+        else{
+
+        }
+
+
+    
+    }
+
+    /*
+     * Code to run ONCE after the driver hits STOP
+     */
+    @Override
+    public void stop() {
+
+    }
+     public void unlatch() {
+         Elevate(false);
+         TaterTot=2;
+
+    }
+     public void KnockMineralOff() {
+         TaterTot=3;
+
+    }
+     public void PlaceTeamMarker() {
+       leftfrontDrive.setPower(.5);
+       rightfrontDrive.setPower(.5);
+       leftrearDrive.setPower(.5);
+       rightrearDrive.setPower(.5);
+                try {
+                Thread.sleep(2000);
+                }catch (Exception e){}                
+                stoprobot();
+                DropMarker();
+    
+        
+        
+                TaterTot=4;
+                
+                
+    } 
+    public void Park() {
+        leftfrontDrive.setPower(-0.5);
+       rightfrontDrive.setPower(.5);
+       leftrearDrive.setPower(-0.5);
+       rightrearDrive.setPower(.5);
+                try {
+                Thread.sleep(1000);
+                }catch (Exception e){}
+        leftfrontDrive.setPower(.5);
+       rightfrontDrive.setPower(.5);
+       leftrearDrive.setPower(.5);
+       rightrearDrive.setPower(.5);
+                 try {
+                Thread.sleep(1000);
+                }catch (Exception e){}
+                
+        //stop the robot
+    }
+    public void stoprobot(){
+        leftfrontDrive.setPower(0);
+       rightfrontDrive.setPower(0);
+       leftrearDrive.setPower(0);
+       rightrearDrive.setPower(0);
+        
+    }
+    public void DropMarker(){
+        
+    }
+    public void Elevate(boolean up){
+        if(up){
+            TopLeft.setPower(.3);
+             TopRight.setPower (.3);
+        }
+        else{ 
+            TopLeft.setPower(-0.3);
+            TopRight.setPower(-0.3);
+        }
+    }
+        
+   
+        
+    }
+    
+    
+

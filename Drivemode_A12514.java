@@ -63,6 +63,7 @@ public class Drivemode_A12514 extends OpMode
     private DcMotor TopLeft =null;
     private DcMotor TopRight =null;
     
+    
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -73,20 +74,22 @@ public class Drivemode_A12514 extends OpMode
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftfrontDrive  = hardwareMap.get(DcMotor.class, "leftfront_drive");
-        rightfrontDrive = hardwareMap.get(DcMotor.class, "rightfront_drive");
-        rightrearDrive = hardwareMap.get(DcMotor.class, "rightrear_drive");
-        leftrearDrive = hardwareMap.get(DcMotor.class, "leftrear_drive");
-        TopLeft =hardwareMap.get(DcMotor.class, "TopLeft");
-        TopRight =hardwareMap.get(DcMotor.class, "TopRight");
+        leftfrontDrive  = hardwareMap.get(DcMotor.class, "leftfrontDrive");
+        rightfrontDrive = hardwareMap.get(DcMotor.class, "rightfrontDrive");
+        rightrearDrive = hardwareMap.get(DcMotor.class, "rightrearDrive");
+        leftrearDrive = hardwareMap.get(DcMotor.class, "leftrearDrive");
+        TopLeft = hardwareMap.get(DcMotor.class, "TopLeft");
+        TopRight = hardwareMap.get(DcMotor.class, "TopRight");
 
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftfrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftfrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftrearDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightrearDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
+        TopRight.setDirection(DcMotor.Direction.FORWARD);
+        TopRight.setDirection(DcMotor.Direction.REVERSE);
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
     }
@@ -125,37 +128,64 @@ public class Drivemode_A12514 extends OpMode
 
         // POV Mode uses left stick to go forward, and right stick to turn.
         // - This uses basic math to combine motions and is easier to drive straight.
-        double drive  = -gamepad1.left_stick_y;
-        double turn   =  gamepad1.right_stick_x;
+        double driveLeft  = -gamepad1.left_stick_y;
+        double driveRight   =  gamepad1.right_stick_y;
       
          
+        leftfrontPower    = Range.clip(driveLeft, -1.0, 1.0) ;
+        leftrearPower    = Range.clip(driveLeft, -1.0, 1.0) ;
+        rightfrontPower   = Range.clip(driveRight, -1.0, 1.0) ;
+        rightrearPower   = Range.clip(driveRight, -1.0, 1.0) ;
         
-        leftfrontPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-        leftrearPower    = Range.clip(drive - turn, -1.0, 1.0) ;
-        rightfrontPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-        rightrearPower   = Range.clip(drive + turn, -1.0, 1.0) ;
-        
-
-        // Tank Mode uses one stick to control each wheel.
-        // - This requires no math, but it is hard to drive forward slowly and keep straight.
-        // leftPower  = -gamepad1.left_stick_y ;
-        // rightPower = -gamepad1.right_stick_y ;
 
         // Send calculated power to wheels
-        leftfrontDrive.setPower(leftfrontPower);
+        leftfrontDrive.setPower(leftfrontPower / 2);
+        leftrearDrive.setPower(leftrearPower / 2);
+        rightfrontDrive.setPower(rightfrontPower / 2);
+        rightrearDrive.setPower(rightrearPower / 2);
+
         
-        rightrearDrive.setPower(rightrearPower);
+        //strafe if the x or b buttons are pressed
+        if(gamepad1.b == true) {
+            leftfrontDrive.setPower(-0.5);
+            leftrearDrive.setPower(0.5);
+            //rightfrontDrive.setPower(0.5);
+            //rightrearDrive.setPower(-0.5);
+            
+        } else if(gamepad1.x == true) {
+            leftfrontDrive.setPower(0.5);
+            leftrearDrive.setPower(-0.5);
+            //rightfrontDrive.setPower(-0.5);
+            //rightrearDrive.setPower(0.5);
+            
+        }
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftfrontPower, rightrearPower,leftrearPower,rightrearPower);
+        telemetry.addData("Motors", "left front(%.2f), right front(%.2f)", leftfrontPower, rightrearPower,leftrearPower,rightrearPower);
         
         
         // moves the lift upwards
-        if(gamepad1.right_bumper) { Lift();}
-    //if The left bumper is pressed the lift would move downwards
-else if (gamepad1.left_bumper){  desend();}
-}
+        if(gamepad2.right_bumper) {
+            topright();
+
+        }
+        // If The left bumper is pressed the lift would move downwards
+        else if (gamepad2.left_bumper) {
+            topleft();
+            
+        } else if (gamepad2.right_trigger == 1) {
+            toprightreverse();
+            
+        } else if (gamepad2.left_trigger == 1) {
+            topleftreverse();
+            
+        } else {
+            
+            stopLift();
+        }
+            
+    }
 
 
 
@@ -167,13 +197,27 @@ else if (gamepad1.left_bumper){  desend();}
     }
     
     //Power for the lift to go up
-    public void Lift() { 
-    TopLeft.setPower (.40);
-    TopRight.setPower (40);
+    public void topright() { 
+    TopLeft.setPower (0);
+    TopRight.setPower (1);
     }
     // power for the lift to go down
-    public void desend() { 
-        TopLeft.setPower (-.40);
-        TopRight.setPower (-.40);
-        }
+    public void topleft() { 
+        TopLeft.setPower (1);
+        TopRight.setPower (0);
+    }
+    public void topleftreverse() {
+        TopLeft.setPower (-1);
+        TopRight.setPower (0);
+    }
+    public void toprightreverse() {
+        TopLeft.setPower (0);
+        TopRight.setPower (-1);
+    }
+    // Turns off the lift 
+    public void stopLift() {
+        TopLeft.setPower (0);
+    TopRight.setPower (0);
+    }
 }
+

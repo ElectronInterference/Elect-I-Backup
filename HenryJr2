@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.util.Range;
 
 @Autonomous(name="Basic: Iterative OpMode", group="Iterative Opmode")
 
-public class HenryJr extends OpMode
+public class HenreyJr2 extends OpMode
 {
     // Hardware map 
         int TaterTot;
@@ -65,5 +65,40 @@ public class HenryJr extends OpMode
         else if (TaterTot==6){
             NavigateToCrater();
         }
+        
+        
     }
-}
+        public void Land(){
+            //LiftDown
+            TaterTot=2;
+        }
+        
+        public void NavigateToCheeseBlock(){
+            //DriveForward
+            //TurnDegrees
+            //DriveForward
+            //...
+            TaterTot=3;
+        }
+        public void FindAndKnockOffCheeseBlock(){
+            //DetectColor 
+            //DriveLeft 
+            //DriveRight
+            TaterTot=4;
+        }
+        public void NavigateToDepot(){
+        //...
+        TaterTot=5;
+    }
+    
+    public void DeployMarker(){
+        //ReleaseMarker
+        TaterTot=6;
+    }
+        
+    public void NavigateToCrater(){
+        //DriveBackward
+    }
+    }
+    
+

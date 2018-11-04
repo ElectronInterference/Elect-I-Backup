@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/* This is the hardwaremap for our 2018-2019 Rover Ruckus robot, Molduga.
+/* This is the hardware program for our 2018-2019 Rover Ruckus robot, Molduga.
 *
 *This hardwaremap is the progam that declares all of our hardware, and has several
 *useful functions that could be used by any opmode.
@@ -62,22 +62,21 @@ public class MoldugaHardware {
     
     
     /* Public OpMode members. */
-    public DcMotor  leftDrive   = null;
-    public DcMotor  rightDrive  = null;
-    public DcMotor  leftArm     = null;
-    public Servo    leftClaw    = null;
-    public Servo    rightClaw   = null;
+    public DcMotor  leftrearDrive   = null;
+    public DcMotor  rightrearDrive  = null;
+    public DcMotor  leftfrontDrive     = null;
+    public DcMotor  rightfrontDrive    = null;
+    public DcMotor  TopLeft    = null;
+    public DcMotor  TopRight    = null;
+    public Servo    Releaser   = null;
 
-    public static final double MID_SERVO       =  0.5 ;
-    public static final double ARM_UP_POWER    =  0.45 ;
-    public static final double ARM_DOWN_POWER  = -0.45 ;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
 
     /* Constructor */
-    public HardwarePushbot(){
+    public MoldugaHardware(){
 
     }
 
@@ -87,28 +86,88 @@ public class MoldugaHardware {
         hwMap = ahwMap;
 
         // Define and Initialize Motors
-        leftDrive  = hwMap.get(DcMotor.class, "left_drive");
-        rightDrive = hwMap.get(DcMotor.class, "right_drive");
-        leftArm    = hwMap.get(DcMotor.class, "left_arm");
-        leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+        leftfrontDrive  = hwMap.get(DcMotor.class, "leftfrontDrive");
+        rightfrontDrive = hwMap.get(DcMotor.class, "rightfrontDrive");
+        leftrearDrive   = hwMap.get(DcMotor.class, "leftrearDrive");
+        rightrearDrive  = hwMap.get(DcMotor.class, "rightrearDrive");
+        TopLeft         = hwMap.get(DcMotor.class, "TopLeft");
+        TopRight        = hwMap.get(DcMotor.class, "TopRight");
+        
+        leftrearDrive.setDirection(DcMotor.Direction.FORWARD); 
+        rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftfrontDrive.setDirection(DcMotor.Direction.FORWARD); 
+        rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Set all motors to zero power
-        leftDrive.setPower(0);
-        rightDrive.setPower(0);
-        leftArm.setPower(0);
-
-        // Set all motors to run without encoders.
-        // May want to use RUN_USING_ENCODERS if encoders are installed.
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftrearDrive.setPower(0);
+        leftfrontDrive.setPower(0);
+        rightrearDrive.setPower(0);
+        rightfrontDrive.setPower(0);
+        TopLeft.setPower(0);
+        TopRight.setPower(0);
+        
+        // Set all motors to run with encoders.
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Define and initialize ALL installed servos.
-        leftClaw  = hwMap.get(Servo.class, "left_hand");
-        rightClaw = hwMap.get(Servo.class, "right_hand");
-        leftClaw.setPosition(MID_SERVO);
-        rightClaw.setPosition(MID_SERVO);
+        Releaser  = hwMap.get(Servo.class, "Releaser");
+
+    }
+    
+    /*Functions*/
+    
+    //wait for a number of seconds
+    public void wait(int delay) {
+        try {
+            Thread.sleep(delay);
+        }catch(Exception e) {
+        }
+    }
+    
+    //stop all drive motors
+    public void stopDrive() {
+        leftrearDrive.setPower(0);
+        leftfrontDrive.setPower(0);
+        rightrearDrive.setPower(0);
+        rightfrontDrive.setPower(0);
+    }
+    
+    //stop all motors
+    public void stopAll() {
+        leftrearDrive.setPower(0);
+        leftfrontDrive.setPower(0);
+        rightrearDrive.setPower(0);
+        rightfrontDrive.setPower(0);
+        TopLeft.setPower(0);
+        TopRight.setPower(0);
+    }
+    
+    public void driveForward(double power, double targetDistance) {
+        leftrearDrive.setPower(power);
+        leftfrontDrive.setPower(power);
+        rightrearDrive.setPower(power);
+        rightfrontDrive.setPower(power);
+        wait((int)(10 * targetDistance / power));
+        stopDrive();
+    }
+    
+    public void driveBackward(double power, double targetDistance) {
+        leftrearDrive.setPower(-power);
+        leftfrontDrive.setPower(-power);
+        rightrearDrive.setPower(-power);
+        rightfrontDrive.setPower(-power);
+        wait((int)(10 * targetDistance / power));
+        stopDrive();
+    }
+    
+    public void markerHold() {
+        Releaser.setPosition(0.32);
+    }
+    
+    public void markerRelease() {
+        Releaser.setPosition(-0.2);
     }
  }
-

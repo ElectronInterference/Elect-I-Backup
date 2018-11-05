@@ -1,46 +1,16 @@
 /* Copyright (c) 2017 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-package org.firstinspires.ftc.teamcode;
-
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+*/
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.Hardware;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.teamcode.MoldugaHardware;
 
-/**
- * This file contains an example of an iterative (Non-Linear) "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When an selection is made from the menu, the corresponding OpMode
+
+/* When an selection is made from the menu, the corresponding OpMode
  * class is instantiated on the Robot Controller and executed.
  *
  * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
@@ -50,46 +20,25 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Drivemode_A12514", group="Teleop")
+@TeleOp(name="Drivemode2", group="Teleop")
 
-public class Drivemode_A12514 extends OpMode
+public class Drivemode2 extends OpMode
 {
-    // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftfrontDrive = null;
-    private DcMotor rightfrontDrive = null;
-    private DcMotor leftrearDrive = null;
-    private DcMotor rightrearDrive =null;
-    private DcMotor TopLeft =null;
-    private DcMotor TopRight =null;
+
+    //acces our hardware program
+    MoldugaHardware robot   = new MoldugaHardware();
     
+    //create a timer
+    private ElapsedTime runtime = new ElapsedTime();
     
     /*
      * Code to run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
-        telemetry.addData("Status", "Initialized");
+        
+        robot.init(hardwareMap);
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        leftfrontDrive  = hardwareMap.get(DcMotor.class, "leftfrontDrive");
-        rightfrontDrive = hardwareMap.get(DcMotor.class, "rightfrontDrive");
-        rightrearDrive = hardwareMap.get(DcMotor.class, "rightrearDrive");
-        leftrearDrive = hardwareMap.get(DcMotor.class, "leftrearDrive");
-        TopLeft = hardwareMap.get(DcMotor.class, "TopLeft");
-        TopRight = hardwareMap.get(DcMotor.class, "TopRight");
-
-
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
-        leftfrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftrearDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
-        TopRight.setDirection(DcMotor.Direction.FORWARD);
-        TopRight.setDirection(DcMotor.Direction.REVERSE);
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
     }
@@ -114,6 +63,7 @@ public class Drivemode_A12514 extends OpMode
      */
     @Override
     public void loop() {
+        
         // Setup a variable for each drive wheel to save power level for telemetry
         double leftfrontPower;
         double rightfrontPower;
@@ -128,7 +78,7 @@ public class Drivemode_A12514 extends OpMode
 
         // POV Mode uses left stick to go forward, and right stick to turn.
         // - This uses basic math to combine motions and is easier to drive straight.
-        double driveLeft  = -gamepad1.left_stick_y;
+        double driveLeft  = gamepad1.left_stick_y;
         double driveRight   =  gamepad1.right_stick_y;
       
          
@@ -139,36 +89,34 @@ public class Drivemode_A12514 extends OpMode
         
 
         // Send calculated power to wheels
-        leftfrontDrive.setPower(leftfrontPower / 2);
-        leftrearDrive.setPower(leftrearPower / 2);
-        rightfrontDrive.setPower(rightfrontPower / 2);
-        rightrearDrive.setPower(rightrearPower / 2);
+        robot.leftfrontDrive.setPower(leftfrontPower / 2);
+        robot.leftrearDrive.setPower(leftrearPower / 2);
+        robot.rightfrontDrive.setPower(rightfrontPower / 2);
+        robot.rightrearDrive.setPower(rightrearPower / 2);
 
         
         //strafe if the x or b buttons are pressed
         if(gamepad1.b == true) {
-            leftfrontDrive.setPower(-0.5);
-            leftrearDrive.setPower(0.5);
+            robot.leftfrontDrive.setPower(-0.5);
+            robot.leftrearDrive.setPower(0.5);
             //rightfrontDrive.setPower(0.5);
             //rightrearDrive.setPower(-0.5);
             
         } else if(gamepad1.x == true) {
-            leftfrontDrive.setPower(0.5);
-            leftrearDrive.setPower(-0.5);
+            robot.leftfrontDrive.setPower(0.5);
+            robot.leftrearDrive.setPower(-0.5);
             //rightfrontDrive.setPower(-0.5);
             //rightrearDrive.setPower(0.5);
-            
         }
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Motors", "left front(%.2f), right front(%.2f)", leftfrontPower, rightrearPower,leftrearPower,rightrearPower);
+        telemetry.addData("Motors", "left front(%.2f), right front(%.2f), left rear(%.2f), right rear(%.2f)", leftfrontPower, rightfrontPower,leftrearPower,rightrearPower);
         
         
         // moves the lift upwards
         if(gamepad2.right_bumper) {
             topright();
-
         }
         // If The left bumper is pressed the lift would move downwards
         else if (gamepad2.left_bumper) {
@@ -181,7 +129,6 @@ public class Drivemode_A12514 extends OpMode
             topleftreverse();
             
         } else {
-            
             stopLift();
         }
             
@@ -198,26 +145,25 @@ public class Drivemode_A12514 extends OpMode
     
     //Power for the lift to go up
     public void topright() { 
-    TopLeft.setPower (0);
-    TopRight.setPower (1);
+        robot.TopLeft.setPower (0);
+        robot.TopRight.setPower (1);
     }
     // power for the lift to go down
     public void topleft() { 
-        TopLeft.setPower (1);
-        TopRight.setPower (0);
+        robot.TopLeft.setPower (1);
+        robot.TopRight.setPower (0);
     }
     public void topleftreverse() {
-        TopLeft.setPower (-1);
-        TopRight.setPower (0);
+        robot.TopLeft.setPower (-1);
+        robot.TopRight.setPower (0);
     }
     public void toprightreverse() {
-        TopLeft.setPower (0);
-        TopRight.setPower (-1);
+        robot.TopLeft.setPower (0);
+        robot.TopRight.setPower (-1);
     }
     // Turns off the lift 
     public void stopLift() {
-        TopLeft.setPower (0);
-    TopRight.setPower (0);
+        robot.TopLeft.setPower (0);
+        robot.TopRight.setPower (0);
     }
 }
-

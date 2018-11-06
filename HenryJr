@@ -7,13 +7,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
+import org.firstinspires.ftc.teamcode.MoldugaHardware;
 @Autonomous(name="Basic: Iterative OpMode", group="Iterative Opmode")
 
 public class HenryJr extends OpMode
 {
-    // Hardware map 
-        int TaterTot;
+    //acces our hardware program
+    MoldugaHardware robot   = new MoldugaHardware();        
+    int TaterTot;
 
      // Code to run ONCE when the driver hits INIT
      
@@ -21,6 +22,9 @@ public class HenryJr extends OpMode
     public void init() {
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Initialized");
+    //acces our hardware program
+   
+    
         
       
     }
@@ -38,7 +42,7 @@ public class HenryJr extends OpMode
      */
     @Override
     public void start() {
-        runtime.reset();
+        //runtime.reset();
     }
 
     /*
@@ -48,22 +52,53 @@ public class HenryJr extends OpMode
     public void loop() {
         // the Robot does the first task which is to unlatch 
        if (TaterTot==1){
-           Land();
+           //Land();
        }
        else if (TaterTot==2){
-           NavigateToChesseblock();
+           //NavigateToChesseBlock();
        }
        else if (TaterTot==3){
-           FindAndKnockOfCheeseBlock();
+           //FindAndKnockOffCheeseBlock();
         }
-        else if (TaterTot=4){
-            NavigateToDepot();
+        else if (TaterTot==4){
+            //NavigateToDepot();
         }
-        else if (Tatertot==5){
-            DeployMarker();
+        else if (TaterTot==5){
+            //DeployMarker();
         }
         else if (TaterTot==6){
-            NavigateToCrater();
+            //NavigateToCrater();
         }
     }
-}
+        //public void (navigateToCheeseBlock){
+            //DriveForward 
+        //}
+    //public void (FindAndKnockoffCHeeseeBlock){
+            Forward(24)
+        if (! Cheeseblock);{
+            DriveRight(15);
+        if (! CheeseBlock){
+            Driveleft(30);
+            TurnRight(10);
+            DriveForward(32);
+        }
+             TurnLeft(10);
+            DriveForward(32);
+        }
+            DriveForward(30);
+            ReleaseMarker();
+            TurnRight(135);
+            DriveForward(100);
+        }
+            //}
+    //public void (NavigateToDepot){
+            //...
+        //}
+    //public void (DeployMarker){
+            //ReleaseMarker 
+        //}
+    // public void (NavigateToCrater){
+            //DriveBackwards
+    //}
+        }
+    

@@ -7,12 +7,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.teamcode.MoldugaHardware;
 
-@Autonomous(name="Basic: Iterative OpMode", group="Iterative Opmode")
+
+@Autonomous(name="HenryJr2", group="Iterative Opmode")
 
 public class HenreyJr2 extends OpMode
 {
-    // Hardware map 
+    //acces our hardware program
+    MoldugaHardware robot   = new MoldugaHardware();
+    
+    
         int TaterTot;
 
      // Code to run ONCE when the driver hits INIT
@@ -38,7 +43,7 @@ public class HenreyJr2 extends OpMode
      */
     @Override
     public void start() {
-        runtime.reset();
+        //runtime.reset();
     }
 
     /*
@@ -51,15 +56,15 @@ public class HenreyJr2 extends OpMode
            Land();
        }
        else if (TaterTot==2){
-           NavigateToChesseblock();
+           NavigateToCheeseBlock();
        }
        else if (TaterTot==3){
-           FindAndKnockOfCheeseBlock();
+           FindAndKnockOffCheeseBlock();
         }
-        else if (TaterTot=4){
+        else if (TaterTot==4){
             NavigateToDepot();
         }
-        else if (Tatertot==5){
+        else if (TaterTot==5){
             DeployMarker();
         }
         else if (TaterTot==6){
@@ -74,8 +79,19 @@ public class HenreyJr2 extends OpMode
         }
         
         public void NavigateToCheeseBlock(){
-            //DriveForward
-            //TurnDegrees
+            DriveForward(24);
+            if (! CheeseBlock){
+                DriveRight(15);
+            if (! CheeseBlock);{
+                DriveLeft(30);
+                TurnRight(90);
+                DriveForward(15);
+                TurnRight(30);
+                DriveForward(40);
+                ReleaseMarker();
+                DriveBackwards(100);
+            }
+            }
             //DriveForward
             //...
             TaterTot=3;
@@ -88,6 +104,7 @@ public class HenreyJr2 extends OpMode
         }
         public void NavigateToDepot(){
         //...
+  
         TaterTot=5;
     }
     

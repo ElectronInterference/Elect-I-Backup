@@ -12,11 +12,10 @@ import org.firstinspires.ftc.teamcode.MoldugaHardware;
 
 @Autonomous(name="HenryJr2", group="Iterative Opmode")
 
-public class HenreyJr2 extends OpMode
+public class HenryJr2 extends OpMode
 {
     //acces our hardware program
-    MoldugaHardware robot   = new MoldugaHardware();
-    
+    MoldugaHardware robot   = new MoldugaHardware();        
     
         int TaterTot;
 
@@ -24,7 +23,7 @@ public class HenreyJr2 extends OpMode
      
     @Override
     public void init() {
-        telemetry.addData("Status", "Initialized");
+        robot.init(hardwareMap);
         telemetry.addData("Status", "Initialized");
         
       
@@ -79,27 +78,22 @@ public class HenreyJr2 extends OpMode
         }
         
         public void NavigateToCheeseBlock(){
-            DriveForward(24);
-            if (! CheeseBlock){
-                DriveRight(15);
-            if (! CheeseBlock);{
-                DriveLeft(30);
-                TurnRight(90);
-                DriveForward(15);
-                TurnRight(30);
-                DriveForward(40);
-                ReleaseMarker();
-                DriveBackwards(100);
-            }
-            }
-            //DriveForward
-            //...
+            robot.driveForward(.5,24);
             TaterTot=3;
         }
         public void FindAndKnockOffCheeseBlock(){
-            //DetectColor 
-            //DriveLeft 
-            //DriveRight
+          if (1==2){
+                robot.driveRight(1,15);
+            if (1==2){
+                robot.driveLeft(.5,30);
+                robot.turnDegrees(-90);
+                robot.driveForward(.5,15);
+                robot.turnDegrees(-30);
+                robot.driveForward(.5,40);
+                robot.markerRelease();
+                robot.driveBackward(1,100);
+            }
+          }
             TaterTot=4;
         }
         public void NavigateToDepot(){

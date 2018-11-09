@@ -20,6 +20,7 @@ public class HenryJr extends OpMode
      
     @Override
     public void init() {
+        robot.init(hardwareMap);
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Initialized");
     //acces our hardware program
@@ -73,24 +74,24 @@ public class HenryJr extends OpMode
         //public void (navigateToCheeseBlock){
             //DriveForward 
         //}
-    //public void (FindAndKnockoffCHeeseeBlock){
-            Forward(24)
-        if (! Cheeseblock);{
-            DriveRight(15);
-        if (! CheeseBlock){
-            Driveleft(30);
-            TurnRight(10);
-            DriveForward(32);
+    public void FindAndKnockoffCHeeseeBlock(){
+        robot.driveForward(.5,24);
+        if (1==2){
+            robot.driveRight(.5,15);
+            if (1==2){
+                robot.driveLeft(.5,30);
+                robot.turnDegrees(10);
+                robot.driveForward(.5,32);
+            }
+            robot.turnDegrees(10);
+            robot.driveForward(.5,32);
+        } else {
+            robot.driveForward(.5,30);
+            robot.markerRelease();
+            robot.turnDegrees(135);
+            robot.driveForward(.5,100);
         }
-             TurnLeft(10);
-            DriveForward(32);
-        }
-            DriveForward(30);
-            ReleaseMarker();
-            TurnRight(135);
-            DriveForward(100);
-        }
-            //}
+    }
     //public void (NavigateToDepot){
             //...
         //}
@@ -100,5 +101,5 @@ public class HenryJr extends OpMode
     // public void (NavigateToCrater){
             //DriveBackwards
     //}
-        }
+}
     

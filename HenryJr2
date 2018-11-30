@@ -53,6 +53,7 @@ public class HenryJr2 extends OpMode
         // the Robot does the first task which is to unlatch 
        if (TaterTot==1){
            Land();
+           TaterTot =2;
        }
        else if (TaterTot==2){
            NavigateToCheeseBlock();
@@ -61,24 +62,25 @@ public class HenryJr2 extends OpMode
            FindAndKnockOffCheeseBlock();
         }
         else if (TaterTot==4){
-            NavigateToDepot();
+            //NavigateToDepot();
         }
         else if (TaterTot==5){
-            DeployMarker();
+            //DeployMarker();
         }
         else if (TaterTot==6){
-            NavigateToCrater();
+            //NavigateToCrater();
         }
         
         
     }
-        public void Land(){
-            //LiftDown
-            TaterTot=2;
+    public void Land(){
+         robot.liftUp();
+         robot.driveRight(.5,2);
+         robot.turnDegrees(0);
         }
         
         public void NavigateToCheeseBlock(){
-            robot.driveForward(.5,24);
+            robot.driveForward(1,24);
             TaterTot=3;
         }
         public void FindAndKnockOffCheeseBlock(){
@@ -89,7 +91,7 @@ public class HenryJr2 extends OpMode
                 robot.turnDegrees(-90);
                 robot.driveForward(.5,15);
                 robot.turnDegrees(-30);
-                robot.driveForward(.5,40);
+                robot.driveForward(1,40);
                 robot.markerRelease();
                 robot.driveBackward(1,100);
             }

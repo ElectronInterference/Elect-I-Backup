@@ -1,4 +1,3 @@
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -70,7 +69,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 public class MoldugaHardware {
     
     
-    /* Public OpMode members. */
+    //public opMode members
     public DcMotor  leftrearDrive   = null;
     public DcMotor  rightrearDrive  = null;
     public DcMotor  leftfrontDrive     = null;
@@ -87,7 +86,7 @@ public class MoldugaHardware {
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
     
-    /* local OpMode members. */
+    //local opMode members
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
 
@@ -101,7 +100,7 @@ public class MoldugaHardware {
         // Save reference to Hardware map
         hwMap = ahwMap;
 
-        // Define and Initialize Motors
+        //define and initialize motors
         leftfrontDrive  = hwMap.get(DcMotor.class, "leftfrontDrive");
         rightfrontDrive = hwMap.get(DcMotor.class, "rightfrontDrive");
         leftrearDrive   = hwMap.get(DcMotor.class, "leftrearDrive");
@@ -132,16 +131,21 @@ public class MoldugaHardware {
         leftrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Define and initialize ALL installed servos.
+        // Define and initialize servos.
         Releaser  = hwMap.get(Servo.class, "Releaser");
         
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
+        parameters.loggingEnabled      = false;
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
         imu = hwMap.get(BNO055IMU.class, "imu");
+
         imu.initialize(parameters);
         
 
@@ -226,22 +230,53 @@ public class MoldugaHardware {
         Releaser.setPosition(-0.2);
     }
     
+    public void liftUp() {
+        TopRight.setPower(0.8);
+        wait(650);
+        TopRight.setPower(0);
+    }
+    
+    public void liftDown() {
+        TopRight.setPower(0.8);
+        wait(650);
+        TopRight.setPower(0);
+    }
+    
     public void driveLeft(double power, double targetDistance) {
-        leftrearDrive.setPower(-power);
-        leftfrontDrive.setPower(power);
-        //rightrearDrive.setPower(-power);
-        //rightfrontDrive.setPower(-power);
-        wait((int)(15 * targetDistance / power));
-        stopDrive();
+        
+        leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
+        rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
+        leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
+        rightfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
+        while(leftfrontDrive.isBusy()) {
+            //Loop body can be empty
+        }
     }
     
     public void driveRight(double power, double targetDistance) {
-        leftrearDrive.setPower(power);
-        leftfrontDrive.setPower(-power);
-        //rightrearDrive.setPower(-power);
-        //rightfrontDrive.setPower(-power);
-        wait((int)(15 * targetDistance / power));
-        stopDrive();
+        leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
+        rightrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
+        leftfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
+        rightfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
+        while(leftfrontDrive.isBusy()) {
+            //Loop body can be empty
+        }
     }
     
     public void turnDegrees(int target) {
@@ -279,4 +314,6 @@ public class MoldugaHardware {
         stopDrive();
     }
  }
+
+
 

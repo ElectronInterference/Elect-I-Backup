@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -184,10 +185,10 @@ public class MoldugaHardware {
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
         leftrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         rightrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
@@ -196,7 +197,7 @@ public class MoldugaHardware {
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
             //Loop body can be empty
         }
     stopAll();
@@ -216,7 +217,7 @@ public class MoldugaHardware {
         rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         rightfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        while(leftfrontDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() || rightfrontDrive.isBusy() || leftrearDrive.isBusy() || rightrearDrive.isBusy()) {
             //Loop body can be empty
         }
         stopAll(); 
@@ -231,8 +232,8 @@ public class MoldugaHardware {
     }
     
     public void liftUp() {
-        TopRight.setPower(0.8);
-        wait(650);
+        TopRight.setPower(-1);
+        wait(2000);
         TopRight.setPower(0);
     }
     
@@ -243,11 +244,11 @@ public class MoldugaHardware {
     }
     
     public void driveLeft(double power, double targetDistance) {
-        
-        leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //NEEDS TO BE RE-IMPLEMENTED
+        //leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+       // rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+       // rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -256,16 +257,21 @@ public class MoldugaHardware {
         rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         rightfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
+        leftfrontDrive.setPower(-Math.abs(power));
+        rightfrontDrive.setPower(-Math.abs(power));
+        leftrearDrive.setPower(Math.abs(power));
+        rightrearDrive.setPower(Math.abs(power));
         while(leftfrontDrive.isBusy()) {
             //Loop body can be empty
         }
     }
     
     public void driveRight(double power, double targetDistance) {
+        /* THIS NEEDS TO BE RE_IMPLEMENTED
         leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
         leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -314,6 +320,4 @@ public class MoldugaHardware {
         stopDrive();
     }
  }
-
-
 

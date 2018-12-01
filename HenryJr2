@@ -1,3 +1,5 @@
+
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -17,7 +19,7 @@ public class HenryJr2 extends OpMode
     //acces our hardware program
     MoldugaHardware robot   = new MoldugaHardware();        
     
-        int TaterTot;
+        int TaterTot = 1;
 
      // Code to run ONCE when the driver hits INIT
      
@@ -42,7 +44,7 @@ public class HenryJr2 extends OpMode
      */
     @Override
     public void start() {
-        //runtime.reset();
+        Land();
     }
 
     /*
@@ -52,7 +54,7 @@ public class HenryJr2 extends OpMode
     public void loop() {
         // the Robot does the first task which is to unlatch 
        if (TaterTot==1){
-           Land();
+           
            TaterTot =2;
        }
        else if (TaterTot==2){
@@ -75,17 +77,17 @@ public class HenryJr2 extends OpMode
     }
     public void Land(){
          robot.liftUp();
-         robot.driveRight(.5,2);
+         robot.driveLeft(1,10);
          robot.turnDegrees(0);
         }
         
         public void NavigateToCheeseBlock(){
-            robot.driveForward(1,24);
+            //robot.driveForward(1,24);
             TaterTot=3;
         }
         public void FindAndKnockOffCheeseBlock(){
           if (1==2){
-                robot.driveRight(1,15);
+                robot.driveLeft(1,7);
             if (1==2){
                 robot.driveLeft(.5,30);
                 robot.turnDegrees(-90);

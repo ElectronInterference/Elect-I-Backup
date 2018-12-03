@@ -127,10 +127,10 @@ public class MoldugaHardware {
         rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Define and initialize servos.
         Releaser  = hwMap.get(Servo.class, "Releaser");
@@ -185,10 +185,10 @@ public class MoldugaHardware {
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
-        rightrearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
-        rightfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
-        leftfrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         rightrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
@@ -198,9 +198,9 @@ public class MoldugaHardware {
         leftrearDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
-            //Loop body can be empty
+            //Wait for one of the motors to reach its target
         }
-    stopAll();
+        stopAll();
         
     }
     
@@ -233,7 +233,7 @@ public class MoldugaHardware {
     
     public void liftUp() {
         TopRight.setPower(-1);
-        wait(2000);
+        wait(2300);
         TopRight.setPower(0);
     }
     

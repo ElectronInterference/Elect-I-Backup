@@ -127,10 +127,10 @@ public class MoldugaHardware {
         rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
 
         // Define and initialize servos.
         Releaser  = hwMap.get(Servo.class, "Releaser");
@@ -200,7 +200,10 @@ public class MoldugaHardware {
         while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
             //Wait for one of the motors to reach its target
         }
-        stopAll();
+        //leftrearDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
+        //rightrearDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
+        //leftfrontDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
+        //rightfrontDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
         
     }
     
@@ -264,6 +267,7 @@ public class MoldugaHardware {
         while(leftfrontDrive.isBusy()) {
             //Loop body can be empty
         }
+        stopAll();
     }
     
     public void driveRight(double power, double targetDistance) {

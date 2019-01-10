@@ -31,6 +31,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -39,6 +43,13 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.MoldugaHardware;
+import java.util.List;
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+
 
 
 /**
@@ -53,14 +64,16 @@ import org.firstinspires.ftc.teamcode.MoldugaHardware;
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@Autonomous(name="Basic: Linear OpMode", group="Linear Opmode")
+@Autonomous(name="DepotAuto", group="Linear Opmode")
 
 public class HenryJr3 extends LinearOpMode {
 
             //acces our hardware program
         MoldugaHardware robot   = new MoldugaHardware();
         int TaterTot = 1;
-        
+
+
+     
     @Override
     public void runOpMode() {
         
@@ -71,55 +84,105 @@ public class HenryJr3 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         
         waitForStart();
-         if (TaterTot==1){
+
         Land();
-         }
-        else if (TaterTot==2){
-           NavigateToCheeseBlock();
-       }
-       else if (TaterTot==3){
-           FindAndKnockoffCheeseBlock();
-        }
-        else if (TaterTot==4){
-            //NavigateToDepot();
-        }
-        else if (TaterTot==5){
-            //DeployMarker();
-        }
-        else if (TaterTot==6){
-            //NavigateToCrater();
-        }
+        navigateToDepot();
+        //DeployMarker();
+        NavigateToCrater();
     }
-         public void Land(){
-         robot.liftUp();
-         robot.driveRight(1,3);
-         robot.turnDegrees(0);
-         }
-     public void NavigateToCheeseBlock(){
-            robot.driveForward(1,24);
-            TaterTot=3;
-}
-    public void FindAndKnockoffCheeseBlock(){
-       
-        if (1==2){
-            robot.driveRight(.5,15);
-            if (1==2){
-                robot.driveLeft(.5,30);
-                robot.turnDegrees(10);
-                robot.driveForward(.5,32);
-            }
-            robot.turnDegrees(10);
-            robot.driveForward(1,32);
-        } else {
-            robot.driveForward(1,30);
-            robot.markerRelease();
-            robot.turnDegrees(135);
-            robot.driveForward(1,100);
-        }
-    }
- 
-}
     
+    
+    public void Land(){
+        //robot.liftUp();
+        robot.driveRight(1,2);
+        robot.turnDegrees(0);
     }
-   
+    
+    
+    
+    
+     public void FindAndKnockOffCheeseblock(){
+         
+        //we haven't found the cheeseblock yet
+        boolean found = false;
+        
+        // the number of times we have tried to find the cheeseblock
+        int tries = 0; 
+        
+        // the position the cheeseblock is in: 0 for left, 1 for center,
+        // 2 for right, and a negative number for not found
+        int cheesePosition = -1;
+        
+        telemetry.addData("Status", "Looking for Cheeseblock");
+        
+        //loop until we have found the cheeseblock or have tried 50 times
+        while(found == false && tries < 100) { 
+            
+            
+            //call the function to find the cheeseblock
+            cheesePosition = robot.detectCheeseBlock();
+            
+            //if the cheeseblock is on the left...
+            if(cheesePosition == 0) {
+                
+                //tell the loop we have found the cheeseblock
+                found = true;
+                telemetry.addData("status", "found left");
+                telemetry.update();
+                //Go to the cheeseblock
+                robot.turnDegrees(-30);
+                robot.driveForward(.5,26);
+                
+            //if the cheeseblock is in the center...
+            } else if(cheesePosition == 1) {
+                
+                //tell the loop we have found the cheeseblock
+                found = true;
+                telemetry.addData("status", "found center");
+                telemetry.update();
+                //Go to the cheeseblock
+                robot.turnDegrees(-10);
+                robot.driveForward(.5,24);
+                
+            //if the cheeseblock is on the right...
+            } else if(cheesePosition == 2) {
+                
+                //tell the program we have found the cheeseblock
+                found = true;
+                telemetry.addData("status", "found right");
+                telemetry.update();
+                //Go to the cheeseblock
+                robot.turnDegrees(10);
+                robot.driveForward(.5,24);
+            }
+            //tell the loop we have tried to find the cheeseblock one more time
+            tries = tries + 1;
+            robot.wait(100);
+        }
+        telemetry.update();
+        robot.wait(1000);
+        TaterTot=3;
+    }
+    
+    
+    
+    
+    
+    public void navigateToDepot() {
+        telemetry.addData("Status", "leaving");
+        telemetry.update();
+        robot.driveForward(0.6,60);
+    }
+    public void DeployMarker() {
+       // robot.Releaser.setPosition(-0.2);
+    }
+    public void NavigateToCrater(){ 
+        telemetry.addData("Status", "backing up");
+        telemetry.update();
+        robot.driveBackward(0.6,2);
+        telemetry.addData("Status", "turning");
+        telemetry.update();
+        robot.turnDegrees(135);
+        robot.driveForward(1,96);
+    }
 }

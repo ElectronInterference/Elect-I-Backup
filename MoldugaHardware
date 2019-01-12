@@ -2,6 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -80,7 +81,7 @@ public class MoldugaHardware {
     public DcMotor  leftfrontDrive     = null;
     public DcMotor  rightfrontDrive    = null;
     public DcMotor  lift    = null;
-    public Servo    Releaser   = null;
+    public CRServo    Releaser   = null;
     public CRServo  mineralLift = null;
     public BNO055IMU imu;
     
@@ -98,11 +99,14 @@ public class MoldugaHardware {
     public TFObjectDetector tfod;
     
     //The variables for our robot's wheels. 
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 1440 ; 
     static final double     DRIVE_GEAR_REDUCTION    = 1 ;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 6.0 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
+    
+    //stores whether stop has been requested
+    static boolean isStopRequested = false;
     
     //local opMode members
     HardwareMap hwMap           =  null;
@@ -144,10 +148,14 @@ public class MoldugaHardware {
         rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize servos.
-        Releaser  = hwMap.get(Servo.class, "Releaser");
+        
         
         //Define and initialize cr servos.
         mineralLift = hwMap.get(CRServo.class, "mineralLift");
+        Releaser  = hwMap.get(CRServo.class, "Releaser");
+        
+        Releaser.setDirection(DcMotor.Direction.FORWARD);
+        
         
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -221,7 +229,7 @@ public class MoldugaHardware {
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Wait for one of the motors to reach its target
         }
         stopAll();
@@ -245,23 +253,27 @@ public class MoldugaHardware {
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
         }
         stopAll(); 
     }
     
     public void markerHold() {
-        Releaser.setPosition(0.32);
+        Releaser.setPower(-1);
+        wait(50);
+        Releaser.setPower(0);
     }
     
     public void markerRelease() {
-        Releaser.setPosition(-0.2);
+        Releaser.setPower(1);
+        wait(50);
+        Releaser.setPower(0);
     }
     
     public void liftUp() {
         lift.setPower(-0.5);
-        wait(3900);
+        wait(3400);
         lift.setPower(0);
     }
     
@@ -289,7 +301,7 @@ public class MoldugaHardware {
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
         }
         stopAll();
@@ -313,7 +325,7 @@ public class MoldugaHardware {
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
         }
         stopDrive();
@@ -350,18 +362,18 @@ public class MoldugaHardware {
                 rightfrontDrive.setPower(0.3);
                 
                 //wait until the robot has turned far enough
-                while (currentAngle > target + 5) {
+                while (currentAngle > target + 5 && !isStopRequested) {
                     currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
                 }
             //if we need to turn right...
-            }else if(currentAngle < target - 5) {
+            }else if(currentAngle < target) {
                 //turn right
                 leftrearDrive.setPower(0.3);
                 leftfrontDrive.setPower(0.3);
                 rightrearDrive.setPower(-0.3);
                 rightfrontDrive.setPower(-0.3);
                 //wait until the robot has turned far enough
-                while (currentAngle < target) {
+                while (currentAngle < target -5 && !isStopRequested) {
                     currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
                 }
             //if we do not know which way to turn, just stop
@@ -450,4 +462,3 @@ public class MoldugaHardware {
     }
     
 }
-

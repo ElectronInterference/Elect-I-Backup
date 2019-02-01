@@ -70,26 +70,28 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 public class HenryJr4 extends LinearOpMode {
 
-    //acces our hardware program
+    //access our hardware program
     MoldugaHardware robot   = new MoldugaHardware();
 
-    
+    //create a timer to send whether the program is stopped to the hardware class
     Timer timer = new Timer("Check For Stop");
     TimerTask checkForStop = new TimerTask() {
         @Override
         public void run() {
+            //If needed, change a variable in MoldugaHardware that stores whether stop is requested
             robot.isStopRequested = isStopRequested();
-            telemetry.addData("Stopping" , String.valueOf(isStopRequested()));
-            telemetry.update();
             
+            //Stop this timer if the program is stopped.
             if(robot.isStopRequested) {
                 timer.cancel();
             }
         }
     };
     
+    //Wait 50 millis between each loop of the timer and don't delay anything besides that.
+    long timerPeriod = 50L;
     long delay = 0L;
-    long timerPeriod = 100L;
+    
     
     
     @Override
@@ -98,46 +100,76 @@ public class HenryJr4 extends LinearOpMode {
         //Schedule a time to tell MoldugaHardware whether the program is stopped
         timer.schedule(checkForStop, delay, timerPeriod );
         
+        //Create a boolean so that our program is only run once
         boolean done = false;
             
         //use our hardwaremap program
         robot.init(hardwareMap);
+        
+        //tell the drivers we have initialized
         telemetry.addData("Status", "Initialized");
+        telemetry.update();
+        
+        //wait for the program to start
         waitForStart();
         
         while(opModeIsActive()) {
+            
+            //If we aren't done, do all of the functions below in order
             if(!done) {
                 Land();
                 navigateToDepot();
                 DeployMarker();
                 NavigateToCrater();
+                
+                //stop the timer and tell the loop we are done
                 timer.cancel();
                 done = true;
             }
         }
     }
     
-   public void Land(){
+    //land and reorient ourselves
+     public void Land(){
+         //Move the lift up
         robot.liftUp();
+        //strafe off of the latch
         robot.driveRight(1,5);
+        //turn away from the lander
         robot.turnDegrees(0);
     }
     
+    //Go to our alliance's depot
     public void navigateToDepot() {
+        //Drive away from the crater
         robot.driveForward(0.6,12);
+        //Turn left towards the Depot(but not all the way or we would hit the lander's legs)
         robot.turnDegrees(90);
-        robot.driveForward(0.6,40);
+        //Drive between the crater and the lander
+        robot.driveForward(0.6,47);
+        //Turn towards the depot
         robot.turnDegrees(135);
-         robot.driveForward(0.6,50);
+        //Go into the depot
+        robot.driveForward(0.6,36);
     }
-     public void DeployMarker() {
-          robot.turnDegrees(45);
-        robot.markerRelease();
-        robot.wait(3000);
+    
+    //Deploy our team marker
+    public void DeployMarker() {
+        //Turn so our team marker can only fall into the depot
+        robot.turnDegrees(0);
+        //release the marker
+        robot.markerRelease();  
+        //wait until the marker has definitely fallen
+        robot.wait(1500);
     }
+    
+    //Drive into the crater
     public void NavigateToCrater(){
-        robot.turnDegrees(140);
-        robot.driveBackward(0.8,102);
+        
+        //Turn towards the crater
+        robot.turnDegrees(-45);
+        //Drive into the crater
+        robot.driveForward(0.8,102);
 
     }
     

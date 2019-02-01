@@ -1,4 +1,4 @@
-* Copyright (c) 2017 FIRST. All rights reserved.*/
+/* Copyright (c) 2017 FIRST. All rights reserved.*/
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;

@@ -323,7 +323,7 @@ public class MoldugaHardware {
     //Move the lift up. This is designed to be started while the lift is in the lowest position
     public void liftUp() {
         lift.setPower(-0.5);
-        wait(2400);
+        wait(2000);
         lift.setPower(0);
     }
     
@@ -578,4 +578,3 @@ public class MoldugaHardware {
         return -1; //TensorFlow is not properly initialized
     }
 }
-

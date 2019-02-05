@@ -79,7 +79,7 @@ public class HenryJr3 extends LinearOpMode {
         //move the lift up
         robot.liftUp();
         //strafe out of the latch
-        robot.driveRight(1,5);
+        robot.driveRight(0.6,7);
         //turn towards the depot
         robot.turnDegrees(-6);
     }
@@ -101,9 +101,9 @@ public class HenryJr3 extends LinearOpMode {
         telemetry.addData("Status", "leaving");
         telemetry.update();
         //drive the the depot
-        robot.driveForward(0.6,56);
+        robot.driveForward(0.8,56);
         //turn so that the team marker always falls into the depot
-        robot.turnDegrees(-90);
+        robot.turnDegrees(-80);
     }
     
     //Deploy the marker
@@ -111,11 +111,11 @@ public class HenryJr3 extends LinearOpMode {
         //Push the team marker off of it's pedestal
         robot.markerRelease();
         //Wait until the marker has definitely fallen
-        robot.wait(1500);
+        robot.wait(1300);
         //turn towards the crater
-        robot.turnDegrees(-50);
+        robot.turnDegrees(-48);
         //strafe to make sure we do not run over our team marker
-        robot.driveLeft(0.4, 5);
+        robot.driveLeft(0.5, 3);
     }
     
     //Drive to the Crater

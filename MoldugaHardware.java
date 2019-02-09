@@ -78,7 +78,9 @@ public class MoldugaHardware {
     public DcMotor  leftfrontDrive     = null;
     public DcMotor  rightfrontDrive    = null;
     public DcMotor  lift    = null;
-    public CRServo    Releaser   = null;
+    //
+    public DcMotor  acquisition =null;
+    public CRServo  Releaser   = null;
     public CRServo  mineralLift = null;
     public BNO055IMU imu;
     public TouchSensor touch = null;
@@ -86,9 +88,7 @@ public class MoldugaHardware {
     // the files for detecting the minerals
     public static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     public static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    public static final String LABEL_SILVER_MINERAL = "Silver Mineral";
     
-    private static final String VUFORIA_KEY = "ARZ9jK3/////AAABmUUaXNvhrkixjdVoQTApe8pKkOSgBAzrh4w49x76evPSBhJPD9ODNLDRoctaDi+4NXihmNZvGN0xSQfWqVc43szbn4ZQzKGAqkQo/GgHbVqADcuwbyEfGYnm7bC9FbbWQmik6swfX1uQo//lK+zHLote6GO5p63tORZ9VWZQjiBMMU8oqKWZmNmLGxsOz/8Xw1mrZodbIu7hUMkjEVbgxhONut4XPReM2Q2sipOZKy0YxSiWBTaXNvLi2egkhXAFL8F9DOatuzQyZdobssqwbDQ7emn1EP+OqgqbzJdV9C0YibdGb2+Sxzeppy+wUYAqBiCs7eHGVLuzqq6IPHxSTtvNYC5+JhWWJNx1Qyz7p1zm";
 
     // stores an instance of the vuforia localizer engine
     private VuforiaLocalizer vuforia;
@@ -96,6 +96,7 @@ public class MoldugaHardware {
     // stores an instance of the TensorFlow Object Detector engine
     private TFObjectDetector tfod = null;
     
+    private static final String VUFORIA_KEY = "ARZ9jK3/////AAABmUUaXNvhrkixjdVoQTApe8pKkOSgBAzrh4w49x76evPSBhJPD9ODNLDRoctaDi+4NXihmNZvGN0xSQfWqVc43szbn4ZQzKGAqkQo/GgHbVqADcuwbyEfGYnm7bC9FbbWQmik6swfX1uQo//lK+zHLote6GO5p63tORZ9VWZQjiBMMU8oqKWZmNmLGxsOz/8Xw1mrZodbIu7hUMkjEVbgxhONut4XPReM2Q2sipOZKy0YxSiWBTaXNvLi2egkhXAFL8F9DOatuzQyZdobssqwbDQ7emn1EP+OqgqbzJdV9C0YibdGb2+Sxzeppy+wUYAqBiCs7eHGVLuzqq6IPHxSTtvNYC5+JhWWJNx1Qyz7p1zm";
     //The variables for our robot's wheels. 
     static final double     COUNTS_PER_MOTOR_REV    = 1440 ; 
     static final double     DRIVE_GEAR_REDUCTION    = 1 ;     // This is < 1.0 if geared UP
@@ -126,7 +127,7 @@ public class MoldugaHardware {
         leftrearDrive   = hwMap.get(DcMotor.class, "leftrearDrive");
         rightrearDrive  = hwMap.get(DcMotor.class, "rightrearDrive");
         lift            = hwMap.get(DcMotor.class, "lift");
-        
+        acquisition     = hwMap.get(DcMotor.class, "lift");
         //set the direction of the motors based on their position of the robot
         leftrearDrive.setDirection(DcMotor.Direction.FORWARD); 
         rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -323,7 +324,7 @@ public class MoldugaHardware {
     //Move the lift up. This is designed to be started while the lift is in the lowest position
     public void liftUp() {
         lift.setPower(-0.5);
-        wait(2400);
+        wait(2000);
         lift.setPower(0);
     }
     
@@ -475,7 +476,7 @@ public class MoldugaHardware {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = CameraDirection.BACK;
+        parameters.cameraDirection = CameraDirection.FRONT;
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
@@ -489,93 +490,51 @@ public class MoldugaHardware {
      * Initialize the Tensor Flow Object Detection engine.
      */
     private void initTfod() {
-        int tfodMonitorViewId = hwMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hwMap.appContext.getPackageName());
+        int tfodMonitorViewId = hwMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hwMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL);
     }
     
-    
-    //This is depricated. It is still here for reference until the new function is fully functional.
-    /*public int detectCheeseBlock() {
-        if (tfod != null) {
-            // getUpdatedRecognitions() will return null if no new information is available since
-            // the last time that call was made.
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            if (updatedRecognitions != null) {
-                //telemetry.addData("# Object Detected", updatedRecognitions.size());
-                if (updatedRecognitions.size() ==3) {
-                    int goldMineralX = -1;
-                    int silverMineral1X = -1;
-                    int silverMineral2X = -1;
-                    for (Recognition recognition : updatedRecognitions) {
-                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            goldMineralX = (int) recognition.getLeft();
-                        } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getLeft();
-                        } else {
-                            silverMineral2X = (int) recognition.getLeft();
-                        }
-                    }
-                    if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                        if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                            return 0;
-                        } else if (goldMineralX > silverMineral1X && goldMineralX < silverMineral2X) {
-                            return 1;
-                        } else if(goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                            return 2;
-                        }
-                    } else {
-                        return -4;
-                    }
-                }else {
-                    return -3;
-                }
-            } else {
-                
-                return -2;
-            }
-        }else{
-          return -1;
-        }
-        return -5;
-    }*/
-    
-    
+
+
     //Find the distance the cheeseblock is to the left or right.
     public int findCheeseblockX() {
     
-        //if tensorflow is initialized...
-        if (tfod != null) {
-            
+    //if tensorflow is initialized...
+    if (tfod != null) {
             // getUpdatedRecognitions() will return null if no new information is available since
             // the last time that call was made.
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
             if (updatedRecognitions != null) {
-                //telemetry.addData("# Object Detected", updatedRecognitions.size());
-                if (updatedRecognitions.size()  >= 1) {
-                    //create a variable to store the location of the gold mineral
+                if (updatedRecognitions.size() >= 1) {
+                      
                     int goldMineralX = -1;
-                    //Do this for each detected mineral
+                    float minY = 9999;
+                    Recognition lowestMineral = null;
                     for (Recognition recognition : updatedRecognitions) {
-                        //Check to see if the detected object is a gold mineral
-                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            //find the location of the mineral to the left and return it.
-                            goldMineralX = (int) recognition.getLeft();
-                            return goldMineralX;
-                        }else{
-                            return -4; //there are no gold minerals in view
+                        
+                        if(recognition.getImageHeight() - recognition.getBottom() < minY) {
+                            if(recognition.getImageHeight() - recognition.getBottom() < 600) {
+                                minY = recognition.getImageHeight() - recognition.getBottom();
+                                lowestMineral = recognition;
+                            }
                         }
                     }
-                }else{
-                    return -3; //There is is not at least one object detected
+                    if(lowestMineral != null) {
+                        goldMineralX = (int)(lowestMineral.getLeft());
+
+                        return (goldMineralX);
+
+                    }
+                } else {
+                    return(-3);
                 }
-            }else{
-                return -2; //There is no change in what has been detected since last time it was checked.
+            } else {
+                return(-2);
             }
         }
-        return -1; //TensorFlow is not properly initialized
+        return(-1);
     }
 }
 

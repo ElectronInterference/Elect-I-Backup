@@ -33,21 +33,24 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 *leftfrontDrive -- REV HD 40:1 hex motor (drive train)
 *rightrearDrive -- REV HD 40:1 hex motor (drive train)
 *rightfrontDrive -- REV HD 40:1 hex motor (drive train)
+*acquisition -- REV HD 40:1 hex motor (mineral arm)
 *lift -- Tetrix TorqueNado (lift)
-*mineralLift -- cr servo (mineral lift)
+*mineralLift -- REV smart cr servo (mineral pusher)
 *
-*Releaser -- REV servo (team marker deployment)
 *
-*Gyro -- the internal gyro in the REV hub
+*releaser -- REV servo (team marker deployment)
+*
+*gyro -- the internal gyro in the REV hub
+*touch -- the touch sensor used as an endstop for the lift
 *
 *
 *SUBJECT TO CHANGE:
 *
-*
+*N/A
 *
 *PLANNED:
 *
-*
+*N/A
 *
 * --FUNCTIONS--
 *
@@ -64,6 +67,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 *HoldMarker -- move Releaser servo down
 *TurnDegrees -- turn a number of degrees(relative to the starting position)
 *DetectCheeseBlock -- Detect which position the cheeseblock is in
+*Turn -- Turn at a specific speed
 */
 
 
@@ -73,22 +77,29 @@ public class MoldugaHardware {
     
     
     //public opMode members
+    
+    //drive motors
     public DcMotor  leftrearDrive   = null;
     public DcMotor  rightrearDrive  = null;
     public DcMotor  leftfrontDrive     = null;
     public DcMotor  rightfrontDrive    = null;
+    
+    //lift and acquisition motors
     public DcMotor  lift    = null;
-    public CRServo    Releaser   = null;
+    public DcMotor  acquisition =null;
+    
+    //servos
+    public CRServo  Releaser   = null;
     public CRServo  mineralLift = null;
+    
+    //sensors
     public BNO055IMU imu;
     public TouchSensor touch = null;
     
-    // the files for detecting the minerals
+    // the tensorFlow files for detecting the minerals
     public static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     public static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    public static final String LABEL_SILVER_MINERAL = "Silver Mineral";
     
-    private static final String VUFORIA_KEY = "ARZ9jK3/////AAABmUUaXNvhrkixjdVoQTApe8pKkOSgBAzrh4w49x76evPSBhJPD9ODNLDRoctaDi+4NXihmNZvGN0xSQfWqVc43szbn4ZQzKGAqkQo/GgHbVqADcuwbyEfGYnm7bC9FbbWQmik6swfX1uQo//lK+zHLote6GO5p63tORZ9VWZQjiBMMU8oqKWZmNmLGxsOz/8Xw1mrZodbIu7hUMkjEVbgxhONut4XPReM2Q2sipOZKy0YxSiWBTaXNvLi2egkhXAFL8F9DOatuzQyZdobssqwbDQ7emn1EP+OqgqbzJdV9C0YibdGb2+Sxzeppy+wUYAqBiCs7eHGVLuzqq6IPHxSTtvNYC5+JhWWJNx1Qyz7p1zm";
 
     // stores an instance of the vuforia localizer engine
     private VuforiaLocalizer vuforia;
@@ -96,7 +107,10 @@ public class MoldugaHardware {
     // stores an instance of the TensorFlow Object Detector engine
     private TFObjectDetector tfod = null;
     
-    //The variables for our robot's wheels. 
+    // the key that allows us to use vuforia
+    private static final String VUFORIA_KEY = "ARZ9jK3/////AAABmUUaXNvhrkixjdVoQTApe8pKkOSgBAzrh4w49x76evPSBhJPD9ODNLDRoctaDi+4NXihmNZvGN0xSQfWqVc43szbn4ZQzKGAqkQo/GgHbVqADcuwbyEfGYnm7bC9FbbWQmik6swfX1uQo//lK+zHLote6GO5p63tORZ9VWZQjiBMMU8oqKWZmNmLGxsOz/8Xw1mrZodbIu7hUMkjEVbgxhONut4XPReM2Q2sipOZKy0YxSiWBTaXNvLi2egkhXAFL8F9DOatuzQyZdobssqwbDQ7emn1EP+OqgqbzJdV9C0YibdGb2+Sxzeppy+wUYAqBiCs7eHGVLuzqq6IPHxSTtvNYC5+JhWWJNx1Qyz7p1zm";
+    
+    //Variables for calculating drive distance with encoders
     static final double     COUNTS_PER_MOTOR_REV    = 1440 ; 
     static final double     DRIVE_GEAR_REDUCTION    = 1 ;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 6.0 ;     // For figuring circumference
@@ -112,11 +126,12 @@ public class MoldugaHardware {
 
     /* Constructor */
     public MoldugaHardware(){
-
+        
     }
 
     /* Initialize standard Hardware interfaces */
     public void init(HardwareMap ahwMap) {
+        
         // Save reference to Hardware map
         hwMap = ahwMap;
 
@@ -126,25 +141,31 @@ public class MoldugaHardware {
         leftrearDrive   = hwMap.get(DcMotor.class, "leftrearDrive");
         rightrearDrive  = hwMap.get(DcMotor.class, "rightrearDrive");
         lift            = hwMap.get(DcMotor.class, "lift");
+        acquisition     = hwMap.get(DcMotor.class, "acquisition");
         
-        //set the direction of the motors based on their position of the robot
+        //set the direction of the motors
         leftrearDrive.setDirection(DcMotor.Direction.FORWARD); 
         rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
         leftfrontDrive.setDirection(DcMotor.Direction.FORWARD); 
         rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        lift.setDirection(DcMotor.Direction.FORWARD);
 
-        // Set all motors to zero power
+        // Set motors to zero power
         leftrearDrive.setPower(0);
         leftfrontDrive.setPower(0);
         rightrearDrive.setPower(0);
         rightfrontDrive.setPower(0);
         lift.setPower(0);
         
-        // Set all motors to run without encoders.
+        // Set drive motors to run without encoders.
         leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        
+        //Set the acquisition motor to run with an encoder
+        acquisition.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        acquisition.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Define and initialize touch sensor.
         touch = hwMap.get(TouchSensor.class, "touch");
@@ -153,7 +174,7 @@ public class MoldugaHardware {
         mineralLift = hwMap.get(CRServo.class, "mineralLift");
         Releaser  = hwMap.get(CRServo.class, "Releaser");
         
-        //set the direction of the CR servos
+        //set the direction of CR servos
         Releaser.setDirection(DcMotor.Direction.FORWARD);
         mineralLift.setDirection(DcMotor.Direction.FORWARD);
         
@@ -165,6 +186,7 @@ public class MoldugaHardware {
         parameters.mode                = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
         parameters.loggingEnabled      = false;
 
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
@@ -262,8 +284,9 @@ public class MoldugaHardware {
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
         
+        //Wait for one of the motors to reach its target or the program to be stopped
         while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
-            //Wait for one of the motors to reach its target or the program to be stopped
+            
         }
         //stop all motors
         stopAll();
@@ -285,7 +308,7 @@ public class MoldugaHardware {
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         
-        //set the target position to target inches times the number of encoder counts in an inch
+        //set the target position to target inches times the number of encoder steps in an inch
         leftrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
@@ -308,34 +331,49 @@ public class MoldugaHardware {
     
     //move the Releaser servo  back into the robot
     public void markerHold() {
-        Releaser.setPower(-0.7);
-        wait(200);
-        Releaser.setPower(0);
+        Releaser.setPower(-0.7); //Make the releaser move
+        wait(200); //wait for the servo to go inside the robot
+        Releaser.setPower(0); //stop the releaser
     }
     
     //Push the team marker off of its pedestal
     public void markerRelease() {
-        Releaser.setPower(2000);
-        wait(1000);
-        Releaser.setPower(0);
+        Releaser.setPower(2000); //Make the releaser move
+        wait(1000); // wait for the releaser to push the team marker
+        Releaser.setPower(0); // stop the releaser
     }
     
     //Move the lift up. This is designed to be started while the lift is in the lowest position
     public void liftUp() {
-        lift.setPower(-0.5);
-        wait(2400);
-        lift.setPower(0);
+        lift.setPower(-0.5); // start the lift
+        wait(2900); // wait for the lift to be raised to where it can unlatch from the lander
+        lift.setPower(0); // stop the lift
     }
     
     //move the lift down until it reaches the button endstop
     public void liftDown() {
-        lift.setPower(0.8);
+        lift.setPower(0.8); // start the lift
         
         //wait while the button hasn't been pressed and the program hasn't been stopped
         while(!touch.isPressed() && !isStopRequested) {
             
         }
-        lift.setPower(0);
+        lift.setPower(0); // stop the lift
+    }
+    
+    public void turn(double power) {
+        
+        //tell the motors not to use an encoder.
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        
+        //Set the motors to the specified power
+        leftrearDrive.setPower(power);
+        leftfrontDrive.setPower(power * 0.7);
+        rightrearDrive.setPower(power);
+        rightfrontDrive.setPower(power);
     }
     
     //strafe left a number of inches
@@ -414,7 +452,6 @@ public class MoldugaHardware {
     
     //Turn a desired number of degrees
     public void turnDegrees(int target) {
-        
         //try to turn four times. This improves precision
         for(int i = 0; i < 4; i ++) {
             
@@ -432,7 +469,6 @@ public class MoldugaHardware {
             float currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             //if we need to turn left...
             if(currentAngle > target) {
-                
                 //turn left
                 leftrearDrive.setPower(-0.3);
                 leftfrontDrive.setPower(-0.3);
@@ -443,6 +479,7 @@ public class MoldugaHardware {
                 while (currentAngle > target + 5 && !isStopRequested) {
                     currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
                 }
+            
             //if we need to turn right...
             }else if(currentAngle < target) {
                 //turn right
@@ -473,9 +510,11 @@ public class MoldugaHardware {
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
+        
+        
+        //tell vuforia that we have a key and which camera to use
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = CameraDirection.BACK;
+        parameters.cameraDirection = CameraDirection.FRONT;
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
@@ -489,93 +528,63 @@ public class MoldugaHardware {
      * Initialize the Tensor Flow Object Detection engine.
      */
     private void initTfod() {
-        int tfodMonitorViewId = hwMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hwMap.appContext.getPackageName());
+        int tfodMonitorViewId = hwMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hwMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL);
     }
     
-    
-    //This is depricated. It is still here for reference until the new function is fully functional.
-    /*public int detectCheeseBlock() {
-        if (tfod != null) {
-            // getUpdatedRecognitions() will return null if no new information is available since
-            // the last time that call was made.
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            if (updatedRecognitions != null) {
-                //telemetry.addData("# Object Detected", updatedRecognitions.size());
-                if (updatedRecognitions.size() ==3) {
-                    int goldMineralX = -1;
-                    int silverMineral1X = -1;
-                    int silverMineral2X = -1;
-                    for (Recognition recognition : updatedRecognitions) {
-                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            goldMineralX = (int) recognition.getLeft();
-                        } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getLeft();
-                        } else {
-                            silverMineral2X = (int) recognition.getLeft();
-                        }
-                    }
-                    if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                        if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                            return 0;
-                        } else if (goldMineralX > silverMineral1X && goldMineralX < silverMineral2X) {
-                            return 1;
-                        } else if(goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                            return 2;
-                        }
-                    } else {
-                        return -4;
-                    }
-                }else {
-                    return -3;
-                }
-            } else {
-                
-                return -2;
-            }
-        }else{
-          return -1;
-        }
-        return -5;
-    }*/
-    
-    
+
+
     //Find the distance the cheeseblock is to the left or right.
     public int findCheeseblockX() {
     
-        //if tensorflow is initialized...
-        if (tfod != null) {
-            
+    //if tensorflow is initialized...
+    if (tfod != null) {
             // getUpdatedRecognitions() will return null if no new information is available since
             // the last time that call was made.
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
             if (updatedRecognitions != null) {
-                //telemetry.addData("# Object Detected", updatedRecognitions.size());
-                if (updatedRecognitions.size()  >= 1) {
-                    //create a variable to store the location of the gold mineral
+                
+                //if there is no error...
+                if (updatedRecognitions.size() >= 0) {
+                      
+                    //create variables for the gold mineral's location
                     int goldMineralX = -1;
-                    //Do this for each detected mineral
+                    float minY = 9999;
+                    
+                    //store a variable for the lowest mineral found
+                    Recognition lowestMineral = null;
+                    
+                    //loop once for each mineral found
                     for (Recognition recognition : updatedRecognitions) {
-                        //Check to see if the detected object is a gold mineral
-                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            //find the location of the mineral to the left and return it.
-                            goldMineralX = (int) recognition.getLeft();
-                            return goldMineralX;
-                        }else{
-                            return -4; //there are no gold minerals in view
+                        
+                        //make sure the mineral is not higher than the last mineral or too low
+                        if(recognition.getImageHeight() - recognition.getBottom() < minY) {
+                            if(recognition.getImageHeight() - recognition.getBottom() > 600) {
+                                
+                                //set the lowest mineral found to be the the chosen one
+                                minY = recognition.getImageHeight() - recognition.getBottom();
+                                lowestMineral = recognition;
+                            }
                         }
                     }
-                }else{
-                    return -3; //There is is not at least one object detected
+                    //if we found a mineral that fit our parameters...
+                    if(lowestMineral != null) {
+                        
+                        //get the mineral's location on the screen and return it
+                        goldMineralX = (int)(lowestMineral.getLeft());
+                        return ((int)(lowestMineral.getLeft()));
+
+                    }
+        //if something didn't work, return an error
+                } else {
+                    return(-3);
                 }
-            }else{
-                return -2; //There is no change in what has been detected since last time it was checked.
+            } else {
+                return(-2);
             }
         }
-        return -1; //TensorFlow is not properly initialized
+        return(-1);
     }
 }
-

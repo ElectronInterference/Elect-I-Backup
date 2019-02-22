@@ -44,6 +44,14 @@ public class Elizabeth_I extends LinearOpMode
             robot.leftrearDrive.setPower(gamepad1.left_stick_y);
             robot.rightfrontDrive.setPower(gamepad1.right_stick_y);
             robot.rightrearDrive.setPower(gamepad1.right_stick_y);
+            
+            if(gamepad1.left_stick_y == 0 && gamepad1.right_stick_y == 0) {
+                //Sends power to wheels based on controller 1's joysticks
+                robot.leftfrontDrive.setPower(gamepad2.left_stick_y / 3);
+                robot.leftrearDrive.setPower(gamepad2.left_stick_y / 3);
+                robot.rightfrontDrive.setPower(gamepad2.right_stick_y / 3);
+                robot.rightrearDrive.setPower(gamepad2.right_stick_y / 3);
+            }
     
             
             //strafe using the x button.
@@ -64,13 +72,22 @@ public class Elizabeth_I extends LinearOpMode
             //opens the Releaser mechanism
             if (gamepad2.left_trigger == 1){
                 robot.mineralLift.setPower(1);
-    
             }
             //Closes the releaser mechanism
             else if (gamepad2.right_trigger == 1){
                 robot.mineralLift.setPower(-1);
             } else {
                 robot.mineralLift.setPower(0);
+            }
+             //Lifts the aquisition arm
+            if (gamepad2.dpad_left == true) {
+                robot.acquisition.setPower(0.5);
+            }
+            // Lowers the aquisition arm
+            else if (gamepad2.dpad_right == true) {
+                robot.acquisition.setPower(-1);
+            } else {
+                robot.acquisition.setPower(0);
             }
     
             //Moves the lift upwards
@@ -103,4 +120,5 @@ public class Elizabeth_I extends LinearOpMode
     public void stopLift() {
         robot.lift.setPower (0);
     }
+
 }

@@ -1,11 +1,15 @@
-
+/* Copyright (c) 2017 FIRST. All rights reserved.*/
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import java.util.List;
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -14,10 +18,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 /* This is the hardware program for our 2018-2019 Rover Ruckus robot, Molduga.
 *
-*This hardwaremap is the progam that declares all of our hardware, and has several
+*This is the progam that declares all of our hardware, and has several
 *useful functions that could be used by any opmode.
 *
 * --HARDWARE DEVICES--
@@ -28,23 +36,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 *leftfrontDrive -- REV HD 40:1 hex motor (drive train)
 *rightrearDrive -- REV HD 40:1 hex motor (drive train)
 *rightfrontDrive -- REV HD 40:1 hex motor (drive train)
+*lift -- Tetrix TorqueNado (lift)
+*mineralLift -- cr servo (mineral lift)
 *
 *Releaser -- REV servo (team marker deployment)
+*
+*Gyro -- the internal gyro in the REV hub
 *
 *
 *SUBJECT TO CHANGE:
 *
-*TopLeft -- Tetrix Torquenado (lowering lift)
-*TopRight -- REV HD 40:1 (raising lift)
 *
 *
 *PLANNED:
-*
-*Lift -- replacing Topleft and TopRight to raise and lower the lift
-*
-*Gyro -- the internal gyro in the REV hub
-*
-*ColorSensor -- a color sensor to detect the gold minerals
 *
 *
 *
@@ -54,14 +58,15 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 *StopAll -- stops all motors and servos
 *LiftUp -- raise the lift
 *LiftDown -- lower the lift
-*DriveForward -- drive forward
-*DriveBackward -- drive backward
-*DriveLeft -- strafe left
-*DriveRight -- strafe right
+*DriveForward -- drive forward(inches)
+*DriveBackward -- drive backward(inches)
+*DriveLeft -- strafe left(inches)
+*DriveRight -- strafe right(inches)
 *Wait -- wait(millis)
-*ReleaseMarkder -- move Releaser servo up
+*ReleaseMarker -- move Releaser servo up
 *HoldMarker -- move Releaser servo down
 *TurnDegrees -- turn a number of degrees(relative to the starting position)
+*DetectCheeseBlock -- Detect which position the cheeseblock is in
 */
 
 
@@ -75,17 +80,33 @@ public class MoldugaHardware {
     public DcMotor  rightrearDrive  = null;
     public DcMotor  leftfrontDrive     = null;
     public DcMotor  rightfrontDrive    = null;
-    public DcMotor  TopLeft    = null;
-    public DcMotor  TopRight    = null;
-    public Servo    Releaser   = null;
+    public DcMotor  lift    = null;
+    public CRServo    Releaser   = null;
+    public CRServo  mineralLift = null;
     public BNO055IMU imu;
     
+    // the files for detecting the minerals
+    public static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    public static final String LABEL_GOLD_MINERAL = "Gold Mineral";
+    public static final String LABEL_SILVER_MINERAL = "Silver Mineral";
+    
+    private static final String VUFORIA_KEY = "ARZ9jK3/////AAABmUUaXNvhrkixjdVoQTApe8pKkOSgBAzrh4w49x76evPSBhJPD9ODNLDRoctaDi+4NXihmNZvGN0xSQfWqVc43szbn4ZQzKGAqkQo/GgHbVqADcuwbyEfGYnm7bC9FbbWQmik6swfX1uQo//lK+zHLote6GO5p63tORZ9VWZQjiBMMU8oqKWZmNmLGxsOz/8Xw1mrZodbIu7hUMkjEVbgxhONut4XPReM2Q2sipOZKy0YxSiWBTaXNvLi2egkhXAFL8F9DOatuzQyZdobssqwbDQ7emn1EP+OqgqbzJdV9C0YibdGb2+Sxzeppy+wUYAqBiCs7eHGVLuzqq6IPHxSTtvNYC5+JhWWJNx1Qyz7p1zm";
+
+    // stores an instance of the vuforia localizer engine
+    public VuforiaLocalizer vuforia;
+
+    // stores an instance of the TensorFlow Object Detector engine
+    public TFObjectDetector tfod;
+    
     //The variables for our robot's wheels. 
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = 2.0 ;     // This is < 1.0 if geared UP
-    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+    static final double     COUNTS_PER_MOTOR_REV    = 1440 ; 
+    static final double     DRIVE_GEAR_REDUCTION    = 1 ;     // This is < 1.0 if geared UP
+    static final double     WHEEL_DIAMETER_INCHES   = 6.0 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
+    
+    //stores whether stop has been requested
+    static boolean isStopRequested = false;
     
     //local opMode members
     HardwareMap hwMap           =  null;
@@ -106,8 +127,7 @@ public class MoldugaHardware {
         rightfrontDrive = hwMap.get(DcMotor.class, "rightfrontDrive");
         leftrearDrive   = hwMap.get(DcMotor.class, "leftrearDrive");
         rightrearDrive  = hwMap.get(DcMotor.class, "rightrearDrive");
-        TopLeft         = hwMap.get(DcMotor.class, "TopLeft");
-        TopRight        = hwMap.get(DcMotor.class, "TopRight");
+        lift            = hwMap.get(DcMotor.class, "lift");
         
         leftrearDrive.setDirection(DcMotor.Direction.FORWARD); 
         rightrearDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -119,21 +139,23 @@ public class MoldugaHardware {
         leftfrontDrive.setPower(0);
         rightrearDrive.setPower(0);
         rightfrontDrive.setPower(0);
-        TopLeft.setPower(0);
-        TopRight.setPower(0);
+        lift.setPower(0);
         
-        // Set all motors to run with encoders.
-        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-        leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-        rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+        // Set all motors to run without encoders.
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize servos.
-        Releaser  = hwMap.get(Servo.class, "Releaser");
+        
+        
+        //Define and initialize cr servos.
+        mineralLift = hwMap.get(CRServo.class, "mineralLift");
+        Releaser  = hwMap.get(CRServo.class, "Releaser");
+        
+        Releaser.setDirection(DcMotor.Direction.FORWARD);
+        
         
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -149,6 +171,10 @@ public class MoldugaHardware {
 
         imu.initialize(parameters);
         
+        //initialize Vuforia
+        initVuforia();
+        initTfod();
+        tfod.activate();
 
     }
     
@@ -172,12 +198,15 @@ public class MoldugaHardware {
     
     //stop all motors
     public void stopAll() {
+        leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftrearDrive.setPower(0);
         leftfrontDrive.setPower(0);
         rightrearDrive.setPower(0);
         rightfrontDrive.setPower(0);
-        TopLeft.setPower(0);
-        TopRight.setPower(0);
+        lift.setPower(0);
     }
     
     public void driveForward(double power, int targetDistance) {
@@ -185,25 +214,25 @@ public class MoldugaHardware {
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        
         leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        
         leftrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         rightrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
         rightfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
-        leftfrontDrive.setPower(Math.abs(power));
+        
+        leftfrontDrive.setPower(Math.abs(power * 0.7));  //TODO: THIS NEEDS TO BE FIXED
         rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
-        leftrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy()) {
+        rightrearDrive.setPower(Math.abs(power));
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Wait for one of the motors to reach its target
         }
-        //leftrearDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
-        //rightrearDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
-        //leftfrontDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
-        //rightfrontDrive.setTargetPosition(leftrearDrive.getCurrentPosition());
+        stopAll();
         
     }
     
@@ -220,108 +249,216 @@ public class MoldugaHardware {
         rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
         rightfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        while(leftfrontDrive.isBusy() || rightfrontDrive.isBusy() || leftrearDrive.isBusy() || rightrearDrive.isBusy()) {
+        leftfrontDrive.setPower(Math.abs(power * 0.7));
+        rightfrontDrive.setPower(Math.abs(power));
+        leftrearDrive.setPower(Math.abs(power));
+        rightrearDrive.setPower(Math.abs(power));
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
         }
         stopAll(); 
     }
     
     public void markerHold() {
-        Releaser.setPosition(0.32);
+        Releaser.setPower(-1);
+        wait(50);
+        Releaser.setPower(0);
     }
     
     public void markerRelease() {
-        Releaser.setPosition(-0.2);
+        Releaser.setPower(1);
+        wait(50);
+        Releaser.setPower(0);
     }
     
     public void liftUp() {
-        TopRight.setPower(-1);
-        wait(2300);
-        TopRight.setPower(0);
+        lift.setPower(-0.5);
+        wait(3400);
+        lift.setPower(0);
     }
     
     public void liftDown() {
-        TopRight.setPower(0.8);
+        lift.setPower(0.8);
         wait(650);
-        TopRight.setPower(0);
+        lift.setPower(0);
     }
     
     public void driveLeft(double power, double targetDistance) {
-        //NEEDS TO BE RE-IMPLEMENTED
-        //leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-       // rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-       // rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
-        rightrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        leftfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        rightfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
-        leftfrontDrive.setPower(-Math.abs(power));
-        rightfrontDrive.setPower(-Math.abs(power));
+        int target = (int)(COUNTS_PER_INCH * targetDistance);
+        leftrearDrive.setTargetPosition(target);
+        rightrearDrive.setTargetPosition(-target);
+        leftfrontDrive.setTargetPosition(-target);
+        rightfrontDrive.setTargetPosition(target);
+        leftfrontDrive.setPower(Math.abs(power * 0.7));
+        rightfrontDrive.setPower(Math.abs(power));
         leftrearDrive.setPower(Math.abs(power));
         rightrearDrive.setPower(Math.abs(power));
-        while(leftfrontDrive.isBusy()) {
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
         }
         stopAll();
     }
     
     public void driveRight(double power, double targetDistance) {
-        /* THIS NEEDS TO BE RE_IMPLEMENTED
         leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
+        rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightrearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftrearDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        rightrearDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
-        leftfrontDrive.setTargetPosition((int)(COUNTS_PER_INCH * targetDistance));
-        rightfrontDrive.setTargetPosition((int)(-COUNTS_PER_INCH * targetDistance));
-        while(leftfrontDrive.isBusy()) {
+        int target = (int)(COUNTS_PER_INCH * targetDistance);
+        leftrearDrive.setTargetPosition(-target);
+        rightrearDrive.setTargetPosition(target);
+        leftfrontDrive.setTargetPosition(target);
+        rightfrontDrive.setTargetPosition(-target);
+        leftfrontDrive.setPower(Math.abs(power * 0.7));
+        rightfrontDrive.setPower(Math.abs(power));
+        leftrearDrive.setPower(Math.abs(power));
+        rightrearDrive.setPower(Math.abs(power));
+        while(leftfrontDrive.isBusy() && rightfrontDrive.isBusy() && leftrearDrive.isBusy() && rightrearDrive.isBusy() && !isStopRequested) {
             //Loop body can be empty
+        }
+        stopDrive();
+    }
+    
+    
+    
+    //Turn a desired number of degrees
+    public void turnDegrees(int target) {
+        
+        //try to turn four times. This improves precision
+        
+        for(int i = 0; i < 4; i ++) {
+            
+            //reset the encoders
+            leftrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightrearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+            leftrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+            rightrearDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+            leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
+            
+            //find our current heading
+            float currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            //if we need to turn left...
+            if(currentAngle > target) {
+                
+                //turn left
+                leftrearDrive.setPower(-0.3);
+                leftfrontDrive.setPower(-0.3);
+                rightrearDrive.setPower(0.3);
+                rightfrontDrive.setPower(0.3);
+                
+                //wait until the robot has turned far enough
+                while (currentAngle > target + 5 && !isStopRequested) {
+                    currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+                }
+            //if we need to turn right...
+            }else if(currentAngle < target) {
+                //turn right
+                leftrearDrive.setPower(0.3);
+                leftfrontDrive.setPower(0.3);
+                rightrearDrive.setPower(-0.3);
+                rightfrontDrive.setPower(-0.3);
+                //wait until the robot has turned far enough
+                while (currentAngle < target -5 && !isStopRequested) {
+                    currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+                }
+            //if we do not know which way to turn, just stop
+            }else{
+                stopAll();
+            }
+            //stop after we have finished
+            stopAll();
         }
     }
     
-    public void turnDegrees(int target) {
-        //find our current heading
-        float currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-        //if we need to turn left...
-        if(currentAngle > target) {
-            
-            //turn left
-            leftrearDrive.setPower(-0.3);
-            leftfrontDrive.setPower(-0.3);
-            rightrearDrive.setPower(0.3);
-            rightfrontDrive.setPower(0.3);
-            
-            //wait until the robot has turned far enough
-            while (currentAngle > target) {
-                currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-            }
-        //if we need to turn right...
-        }else if(currentAngle < target) {
-            //turn right
-            leftrearDrive.setPower(0.3);
-            leftfrontDrive.setPower(0.3);
-            rightrearDrive.setPower(-0.3);
-            rightfrontDrive.setPower(-0.3);
-            //wait until the robot has turned far enough
-            while (currentAngle < target) {
-                currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-            }
-        //if we do not know which way to turn, just stop
-        }else{
-            stopDrive();
-        }
-        //stop after we have finished
-        stopDrive();
-    }
- }
+    //functions for Vuforia
+        /**
+     * Initialize the Vuforia localization engine.
+     */
+    public void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = CameraDirection.BACK;
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+    }
+
+
+
+    /**
+     * Initialize the Tensor Flow Object Detection engine.
+     */
+    private void initTfod() {
+        int tfodMonitorViewId = hwMap.appContext.getResources().getIdentifier(
+            "tfodMonitorViewId", "id", hwMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+    
+    public int detectCheeseBlock() {
+        if (tfod != null) {
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                //telemetry.addData("# Object Detected", updatedRecognitions.size());
+                if (updatedRecognitions.size() == 3) {
+                    int goldMineralX = -1;
+                    int silverMineral1X = -1;
+                    int silverMineral2X = -1;
+                    for (Recognition recognition : updatedRecognitions) {
+                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                            goldMineralX = (int) recognition.getLeft();
+                        } else if (silverMineral1X == -1) {
+                            silverMineral1X = (int) recognition.getLeft();
+                        } else {
+                            silverMineral2X = (int) recognition.getLeft();
+                        }
+                    }
+                    if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+                        if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
+                            return 0;
+                        } else if (goldMineralX > silverMineral1X && goldMineralX < silverMineral2X) {
+                            return 1;
+                        } else if(goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                            return 2;
+                        }
+                    } else {
+                        return -4;
+                    }
+                }else {
+                    return -3;
+                }
+            } else {
+                
+                return -2;
+            }
+        }else{
+          return -1;
+        }
+        return -5;
+    }
+    
+}
